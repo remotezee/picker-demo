@@ -241,7 +241,7 @@ const STR = {
     msgIntro: "طلب شراء جديد",
     msgPharmacy: "الصيدلية: ",
     msgOrderNo: "رقم الطلب: ",
-    msgTotal: "الإجمالي الصافي: ", tblItem: "الصنف", tblQty: "عدد", tblTotal: "اجمالي",
+    msgTotal: "الإجمالي الصافي: ", tblItem: "الصنف", tblQty: "عدد", tblTotal: "اجمالي", msgQty: "العدد: ", msgLineTotal: "الاجمالي: ", sending: "جارٍ الإرسال…",
     msgPhone: "رقم التواصل: ",
     msgAddress: "العنوان: ",
     msgNotes: "ملاحظات: ",
@@ -271,7 +271,7 @@ const STR = {
     msgIntro: "New purchase order",
     msgPharmacy: "Pharmacy: ",
     msgOrderNo: "Order no.: ",
-    msgTotal: "Net total: ", tblItem: "Item", tblQty: "Qty", tblTotal: "Total",
+    msgTotal: "Net total: ", tblItem: "Item", tblQty: "Qty", tblTotal: "Total", msgQty: "Qty: ", msgLineTotal: "Total: ", sending: "Sending…",
     msgPhone: "Contact: ",
     msgAddress: "Address: ",
     msgNotes: "Notes: ",
@@ -471,18 +471,15 @@ sendBtn.addEventListener('click', () => {
     lines.push({ d: d, q: it.q, gross: lineGross(d, it.q), net: lineNet(d, it.q) });
   });
   const tt = totals();
-  // tabulated order: name | qty | net (WhatsApp monospace block)
-  const names = lines.map(L => (L.d.en + ' ' + L.d.strength).trim());
-  let w = 0; names.forEach(s => { w = Math.max(w, Math.min(s.length, 34)); });
-  const rows = lines.map((L, k) => {
-    let nm = names[k];
-    if (nm.length > 34) nm = nm.slice(0, 33) + '…';
-    return nm.padEnd(w) + '  ' + String(L.q).padStart(3) + '  ' + fmt(L.net).padStart(10);
+  // labeled lines, no table: WhatsApp wraps fixed-width rows and scatters the headings
+  // (proven on a real phone 2026-10-22), so each medicine carries its own qty/total labels.
+  // The order number is wrapped in bidi isolates (FSI/PDI) so Arabic text cannot flip it.
+  let msg = t.msgIntro + '\n' + t.msgPharmacy + name + '\n' + t.msgOrderNo + '\u2068' + orderNo + '\u2069' + '\n';
+  lines.forEach((L, k) => {
+    const nm = (L.d.en + ' ' + L.d.strength).trim();
+    msg += '\n' + (k + 1) + ') ' + nm + '\n' + t.msgQty + L.q + ' \u2014 ' + t.msgLineTotal + fmt(L.net) + t.egp;
   });
-  let msg = t.msgIntro + '\n' + t.msgPharmacy + name + '\n' + t.msgOrderNo + orderNo + '\n\n';
-  const headRow = t.tblItem.padEnd(w) + '  ' + t.tblQty.padStart(3) + '  ' + t.tblTotal.padStart(10);
-  msg += '```\n' + '‎' + headRow + '\n' + rows.join('\n') + '\n```\n\n';
-  msg += t.msgTotal + fmt(tt.net) + t.egp + '\n' + t.msgPhone + phone + '\n' + t.msgAddress + address;
+  msg += '\n\n' + t.msgTotal + fmt(tt.net) + t.egp + '\n' + t.msgPhone + phone + '\n' + t.msgAddress + address;
   // quiet book feeds via two Google Forms: our summary book + his detailed book
   if (FORM_A_URL && FORM_B_URL) {
     try {
@@ -490,7 +487,7 @@ sendBtn.addEventListener('click', () => {
       const post = (url, pairs) => {
         const body = new URLSearchParams(pairs);
         if (!(navigator.sendBeacon && navigator.sendBeacon(url, body))) {
-          fetch(url, { method: 'POST', mode: 'no-cors', body: body }).catch(function () {});
+          fetch(url, { method: 'POST', mode: 'no-cors', keepalive: true, body: body }).catch(function () {});
         }
       };
       const A = FORM_A_E, B = FORM_B_E;
@@ -502,7 +499,12 @@ sendBtn.addEventListener('click', () => {
         [B.disc, L.d.disc], [B.lineGross, r2(L.gross)], [B.lineNet, r2(L.net)], [B.netTotal, r2(tt.net)]]));
     } catch (e) {}
   }
-  window.location.href = 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg);
+  // give the quiet book posts a beat to leave the phone before WhatsApp takes over:
+  // an instant app switch killed them on a real send (2026-10-22)
+  const waUrl = 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg);
+  sendBtn.disabled = true;
+  sendBtn.textContent = t.sending;
+  setTimeout(function () { window.location.href = waUrl; }, 900);
 });
 
 function applyLang() {
