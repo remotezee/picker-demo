@@ -476,7 +476,7 @@ sendBtn.addEventListener('click', () => {
   // The order number is wrapped in bidi isolates (FSI/PDI) so Arabic text cannot flip it.
   let msg = t.msgIntro + '\n' + t.msgPharmacy + name + '\n' + t.msgOrderNo + '\u2068' + orderNo + '\u2069' + '\n';
   lines.forEach((L, k) => {
-    const nm = (L.d.en + ' ' + L.d.strength).trim();
+    const nm = ((L.d.en + ' ' + L.d.strength).trim() + ' \u2014 ' + formOf(L.d)).trim();
     msg += '\n' + (k + 1) + ') ' + nm + '\n' + t.msgQty + L.q + ' \u2014 ' + t.msgLineTotal + fmt(L.net) + t.egp + '\n';
   });
   msg += '\n' + t.msgTotal + fmt(tt.net) + t.egp + '\n' + t.msgPhone + phone + '\n' + t.msgAddress + address;
