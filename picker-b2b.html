@@ -477,9 +477,9 @@ sendBtn.addEventListener('click', () => {
   let msg = t.msgIntro + '\n' + t.msgPharmacy + name + '\n' + t.msgOrderNo + '\u2068' + orderNo + '\u2069' + '\n';
   lines.forEach((L, k) => {
     const nm = (L.d.en + ' ' + L.d.strength).trim();
-    msg += '\n' + (k + 1) + ') ' + nm + '\n' + t.msgQty + L.q + ' \u2014 ' + t.msgLineTotal + fmt(L.net) + t.egp;
+    msg += '\n' + (k + 1) + ') ' + nm + '\n' + t.msgQty + L.q + ' \u2014 ' + t.msgLineTotal + fmt(L.net) + t.egp + '\n';
   });
-  msg += '\n\n' + t.msgTotal + fmt(tt.net) + t.egp + '\n' + t.msgPhone + phone + '\n' + t.msgAddress + address;
+  msg += '\n' + t.msgTotal + fmt(tt.net) + t.egp + '\n' + t.msgPhone + phone + '\n' + t.msgAddress + address;
   // quiet book feeds via two Google Forms: our summary book + his detailed book
   if (FORM_A_URL && FORM_B_URL) {
     try {
